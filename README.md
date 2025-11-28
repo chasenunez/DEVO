@@ -1,4 +1,5 @@
-<center><img title="whip it" alt="whip it good"  height="200" src="/images/DEVO_Pixels_2.webp"></center>
+<center><img title="whip it" alt="whip it good"  height="200" src="/images/DEVO_Pixels_2.webp"></center> <br>
+
 # DEVO
 Data Enrichment and Validation Operator (DEVO) provides a simple command-line tool and library to enrich CSV files into the standardized “iCSV” format (with embedded metadata) and then validate the data using the Frictionless framework. 
 It supports two modes: if given a plain `.csv`, DEVO will infer metadata and output an `.icsv` (with METADATA, FIELDS, and DATA sections) and then validate it; if given an existing `.icsv`, DEVO will skip enrichment and only perform validation. 
