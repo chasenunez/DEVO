@@ -6,6 +6,8 @@ Data Enrichment and Validation Operator (DEVO) provides a simple command-line to
 It supports two modes: if given a plain `.csv`, DEVO will infer metadata and output an `.icsv` (with METADATA, FIELDS, and DATA sections) and then validate it; if given an existing `.icsv`, DEVO will skip enrichment and only perform validation. 
 The Frictionless library is used to infer schema and validate data, producing detailed, user-friendly error reports.
 
+The [validation](https://gitlab.eawag.ch/chase.nunez/envidat_frictionless) and [enrichment](https://gitlab.eawag.ch/chase.nunez/csv_enrichment) code were developed in separate repositories from this instance.
+
 DEVO is packaged for easy installation (on PyPI) with all dependencies (e.g. `frictionless`, `pytest`, `psycopg2-binary`, and `python-dateutil`) specified. The source code is modular and well-documented so users can adjust or extend metadata fields and validation rules. 
 The package includes a CLI entry point so a novice user can run something like `devo mydata.csv` to get the enriched `.icsv` and a validation report.
 
