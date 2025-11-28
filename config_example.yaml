@@ -1,0 +1,8 @@
+# Example DEVO config file
+# save as devo.yaml or pass with --config path
+
+application_profile: "DEVO_DEFAULT"
+field_delimiter: "|"
+nodata: "-999"
+out_icsv: null
+schema_out: null

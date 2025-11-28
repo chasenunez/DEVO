@@ -1,0 +1,5 @@
+frictionless>=4.0.0
+psycopg2-binary>=2.9.0
+pytest>=7.0.0
+python-dateutil>=2.8.0
+pyyaml>=5.4.1

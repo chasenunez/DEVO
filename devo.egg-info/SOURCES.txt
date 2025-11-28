@@ -1,0 +1,10 @@
+README.md
+setup.py
+devo.egg-info/PKG-INFO
+devo.egg-info/SOURCES.txt
+devo.egg-info/dependency_links.txt
+devo.egg-info/entry_points.txt
+devo.egg-info/requires.txt
+devo.egg-info/top_level.txt
+tests/test_enrichment.py
+tests/test_validation.py
