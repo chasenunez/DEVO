@@ -6,6 +6,38 @@ The Frictionless library is used to infer schema and validate data, producing de
 DEVO is packaged for easy installation (on PyPI) with all dependencies (e.g. `frictionless`, `pytest`, `psycopg2-binary`, and `python-dateutil`) specified. The source code is modular and well-documented so users can adjust or extend metadata fields and validation rules. 
 The package includes a CLI entry point so a novice user can run something like `devo mydata.csv` to get the enriched `.icsv` and a validation report.
 
+## File structure
+
+```
+devo/                        # package
+├── __init__.py
+├── cli.py
+├── enrichment.py
+├── validation.py
+├── utils.py
+config_example.yaml
+README.md
+pyproject.toml
+setup.py
+tests/
+├── test_enrichment.py
+└── test_validation.py
+```
+
+- `cli.py` contains the `main()` function or entry-point logic. It detects the input type (CSV or iCSV), dispatches to the enrichment and/or validation routines, and writes the outputs.
+
+- `enrichment.py` implements CSV reading and metadata inference, building the iCSV structure and writing it out.
+
+- `validation.py` implements parsing the METADATA/FIELDS from an iCSV, constructing a Frictionless schema, running the validation, and writing a readable report.
+
+- `utils.py` (optional) can hold shared helpers (e.g. a config file loader using `python-dateutil` for datetime parsing).
+
+- `tests/` contains `pytest` tests for each module to ensure correctness.
+
+- `setup.py` (or pyproject.toml) contains the packaging instructions (see below).
+
+- `README.md` explains DEVO’s purpose and usage to end users (recommended by packaging best practices.
+
 ## CSV Enrichment (iCSV Generation)
 
 When given a plain `.csv` file, DEVO performs the following steps to create an `iCSV`:
@@ -106,34 +138,3 @@ ERROR: Row 25, Column 1 [missing-cell]: Missing value in field "timestamp"
 
 Since the error report will be the primary mode of user interface with this process, messages have been written to be kind and helpful. For example, if a numeric field has non-numeric text, the message suggests the value is wrong type. 
 Frictionless’s messages are usually clear, but DEVO will also prepend tips like “Check that all values are valid numbers/date”.) The emphasis is on helping users locate and fix problems. 
-
-## File structure
-
-```
-devo/                   # Top-level package directory
-├── __init__.py         # Package initialization
-├── cli.py              # Command-line interface
-├── enrichment.py       # CSV → iCSV generation (metadata enrichment)
-├── validation.py       # iCSV parsing → schema building → validation
-├── utils.py            # (Optional: shared utility functions, e.g. config loading)
-└── tests/              # Pytest test cases
-setup.py                # Package metadata and dependencies
-README.md               # Project description
-config_example.yaml     # Example configuration file (optional)
-# ...
-
-```
-
-- `cli.py` contains the `main()` function or entry-point logic. It detects the input type (CSV or iCSV), dispatches to the enrichment and/or validation routines, and writes the outputs.
-
-- `enrichment.py` implements CSV reading and metadata inference, building the iCSV structure and writing it out.
-
-- `validation.py` implements parsing the METADATA/FIELDS from an iCSV, constructing a Frictionless schema, running the validation, and writing a readable report.
-
-- `utils.py` (optional) can hold shared helpers (e.g. a config file loader using `python-dateutil` for datetime parsing).
-
-- `tests/` contains `pytest` tests for each module to ensure correctness.
-
-- `setup.py` (or pyproject.toml) contains the packaging instructions (see below).
-
-- `README.md` explains DEVO’s purpose and usage to end users (recommended by packaging best practices.
