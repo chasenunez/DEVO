@@ -1,93 +1,139 @@
 # DEVO
+DEVO provides a simple command-line tool and library to enrich CSV files into the standardized “iCSV” format (with embedded metadata) and then validate the data using the Frictionless framework. 
+It supports two modes: if given a plain `.csv`, DEVO will infer metadata and output an `.icsv` (with METADATA, FIELDS, and DATA sections) and then validate it; if given an existing `.icsv`, DEVO will skip enrichment and only perform validation. 
+The Frictionless library is used to infer schema and validate data, producing detailed, user-friendly error reports.
+
+DEVO is packaged for easy installation (on PyPI) with all dependencies (e.g. `frictionless`, `pytest`, `psycopg2-binary`, and `python-dateutil`) specified. The source code is modular and well-documented so users can adjust or extend metadata fields and validation rules. 
+The package includes a CLI entry point so a novice user can run something like `devo mydata.csv` to get the enriched `.icsv` and a validation report.
+
+## CSV Enrichment (iCSV Generation)
+
+When given a plain `.csv` file, DEVO performs the following steps to create an `iCSV`:
+
+- Read and sample the `CSV`. DEVO detects the delimiter (comma, tab, pipe, etc.) using Python’s `csv.Sniffer` or similar heuristics. DEVO then loads the header row (column names) and all data rows.
+
+- Infer field types and statistics. For each column, DEVO proposes a simple type (integer, number, datetime, or string) by examining its values.
+
+- DEVO uses regular expressions and date parsing (optionally via dateutil.parser) to classify values. For numeric columns it computes minimum and maximum; for datetime it computes min/max in ISO format. It also count missing values (common placeholders like NA, null, etc., are treated as “missing”). If a column has no missing values, DEVO marks it as required in the schema.
+
+- DEVO builds lines for the METADATA section of the iCSV. This includes required keys like `iCSV_version = 1.0`, `field_delimiter = {delim}`, plus optional keys like `generator = DEVO <version>`, `c`reation_date`, `srid`, etc. (These follow the iCSV specification.) 
+
+        For example:
+
+        ```
+        # iCSV 1.0 UTF-8
+        # [METADATA]
+        # iCSV_version = 1.0
+        # field_delimiter = |
+        # columns = 5
+        # rows = 123
+        # creation_date = 2025-10-01T12:34:56Z
+        # nodata = -999
+        # ...
+        ```
+
+        DEVO will include any user-provided hints (e.g. a --nodata argument or a config override) here.
+
+- Build the fields section. Under # [FIELDS], DEVO lists `fields = name1|name2|...` (the column names) and other aligned lists (types, min, max, missing count, etc.) separated by the same delimiter. 
+
+        For instance:
+        ```
+        # [FIELDS]
+        # fields = timestamp|temperature|humidity
+        # types = datetime|number|number
+        # min = 2020-01-01T00:00:00|10.0|0.0
+        # max = 2021-01-01T00:00:00|35.7|1.0
+        # missing_count = 0|5|2
+        ```
+
+        This section fully describes each column (long_name, units, etc., could be added similarly if available).
+
+- Write the iCSV file. According to the iCSV spec, the file starts with `# iCSV 1.0 UTF-8`, then `# [METADATA]` block, then `# [FIELDS]` block, then `# [DATA]`. In the DATA section, no lines begin with #. DEVO writes each data row (values separated by field_delimiter). Importantly, DEVO does not repeat the header row under `# [DATA]`—the fields are already defined in metadata. 
+
+        For example:
+        ```
+        # [DATA]
+        2020-01-01T00:00:00Z|15.2|0.85
+        2020-01-01T01:00:00Z|15.1|0.87
+        ...
+        ```
 
 
+## Data Validation (Schema & Error Reporting)
 
-## Getting started
+After enrichment (or if an .icsv is already provided), DEVO validates the data:
 
-To make it easy for you to get started with GitLab, here's a list of recommended next steps.
+- Parse `METADATA` and `FIELDS`. DEVO will read the `iCSV` and extract the key metadata and field lists. For each # key = value line under `# [METADATA]` and `# [FIELDS]`, DEVO strips the leading # and parse keys and values. It verifies that required metadata (like field_delimiter, geometry, srid) and the fields list are present. Any problems here generate errors. Fun!
 
-Already a pro? Just edit this README.md and make it your own. Want to make it easy? [Use the template at the bottom](#editing-this-readme)!
+- Extract the `DATA` rows. DEVO locates the `# [DATA]` marker and reads all following lines (ignoring lines that start with #). It then splits each line using the discovered `field_delimiter` to get raw data values. (Note: DEVO dynamically uses the metadata’s delimiter.)
 
-## Add your files
+- Build a Frictionless schema. Using the field names from metadata and the parsed rows, DEVO constructs a `.JSON` table schema compatible with Frictionless. This schema lists each field’s name, type, format (if needed), description, and constraints (minimum, maximum, required, etc.).DEVO can reuse the same inference logic from enrichment: for each column, use the collected values to determine type and constraints. 
 
-- [ ] [Create](https://docs.gitlab.com/ee/user/project/repository/web_editor.html#create-a-file) or [upload](https://docs.gitlab.com/ee/user/project/repository/web_editor.html#upload-a-file) files
-- [ ] [Add files using the command line](https://docs.gitlab.com/topics/git/add_files/#add-files-to-a-git-repository) or push an existing Git repository with the following command:
+        For example:
+        ```
+        {
+        "fields": [
+            {"name": "timestamp", "type": "datetime", "format": "any", "constraints": {"required": true}},
+            {"name": "temperature", "type": "number", "minimum": -50, "maximum": 60},
+            {"name": "humidity", "type": "number", "minimum": 0, "maximum": 1}
+        ],
+        "missingValues": ["", "NA", "null"]
+        }
+        ```
+
+- Validate with Frictionless. DEVO uses frictionless.Resource to validate the data rows against the schema. 
+
+        For example:
+        ```
+        from frictionless import Resource
+
+        # (Assume data_rows is a list of lists, and schema_json is the schema dict)
+        # Write data_rows to a temporary CSV file or feed directly if supported:
+        resource = Resource(path=temporary_csv_path, schema=schema_path_or_dict)
+        report = resource.validate()
+        ```
+
+DEVO relies Frictionless to produces a report of all detected issues. 
+
+For example, it will flag duplicate or blank column labels, type mismatches (e.g. text in a numeric field), missing cells, extra cells, etc. Each error includes the row number, field number, an error code (like type-error, missing-cell), and a descriptive message.
+
+- Write a readable error report. DEVO collects the validation errors and formats them into a text report (`<input>_data_report.txt` by default). If the data is valid, DEVO will write `"Data validation [OK]"`. Otherwise, it will iterate over `report.flatten(...)` and write lines such as:
 
 ```
-cd existing_repo
-git remote add origin https://gitlab.eawag.ch/chase.nunez/devo.git
-git branch -M main
-git push -uf origin main
+ERROR: Row 12, Column 3 [type-error]: Type error: cannot parse "abc" as integer
+ERROR: Row 25, Column 1 [missing-cell]: Missing value in field "timestamp"
 ```
 
-## Integrate with your tools
+Since the error report will be the primary mode of user interface with this process, messages have been written to be kind and helpful. For example, if a numeric field has non-numeric text, the message suggests the value is wrong type. 
+Frictionless’s messages are usually clear, but DEVO will also prepend tips like “Check that all values are valid numbers/date”.) The emphasis is on helping users locate and fix problems. 
 
-- [ ] [Set up project integrations](https://gitlab.eawag.ch/chase.nunez/devo/-/settings/integrations)
+## File structure
 
-## Collaborate with your team
+```
+devo/                   # Top-level package directory
+├── __init__.py         # Package initialization
+├── cli.py              # Command-line interface
+├── enrichment.py       # CSV → iCSV generation (metadata enrichment)
+├── validation.py       # iCSV parsing → schema building → validation
+├── utils.py            # (Optional: shared utility functions, e.g. config loading)
+└── tests/              # Pytest test cases
+setup.py                # Package metadata and dependencies
+README.md               # Project description
+config_example.yaml     # Example configuration file (optional)
+# ...
 
-- [ ] [Invite team members and collaborators](https://docs.gitlab.com/ee/user/project/members/)
-- [ ] [Create a new merge request](https://docs.gitlab.com/ee/user/project/merge_requests/creating_merge_requests.html)
-- [ ] [Automatically close issues from merge requests](https://docs.gitlab.com/ee/user/project/issues/managing_issues.html#closing-issues-automatically)
-- [ ] [Enable merge request approvals](https://docs.gitlab.com/ee/user/project/merge_requests/approvals/)
-- [ ] [Set auto-merge](https://docs.gitlab.com/user/project/merge_requests/auto_merge/)
+```
 
-## Test and Deploy
+- `cli.py` contains the `main()` function or entry-point logic. It detects the input type (CSV or iCSV), dispatches to the enrichment and/or validation routines, and writes the outputs.
 
-Use the built-in continuous integration in GitLab.
+- `enrichment.py` implements CSV reading and metadata inference, building the iCSV structure and writing it out.
 
-- [ ] [Get started with GitLab CI/CD](https://docs.gitlab.com/ee/ci/quick_start/)
-- [ ] [Analyze your code for known vulnerabilities with Static Application Security Testing (SAST)](https://docs.gitlab.com/ee/user/application_security/sast/)
-- [ ] [Deploy to Kubernetes, Amazon EC2, or Amazon ECS using Auto Deploy](https://docs.gitlab.com/ee/topics/autodevops/requirements.html)
-- [ ] [Use pull-based deployments for improved Kubernetes management](https://docs.gitlab.com/ee/user/clusters/agent/)
-- [ ] [Set up protected environments](https://docs.gitlab.com/ee/ci/environments/protected_environments.html)
+- `validation.py` implements parsing the METADATA/FIELDS from an iCSV, constructing a Frictionless schema, running the validation, and writing a readable report.
 
-***
+- `utils.py` (optional) can hold shared helpers (e.g. a config file loader using `python-dateutil` for datetime parsing).
 
-# Editing this README
+- `tests/` contains `pytest` tests for each module to ensure correctness.
 
-When you're ready to make this README your own, just edit this file and use the handy template below (or feel free to structure it however you want - this is just a starting point!). Thanks to [makeareadme.com](https://www.makeareadme.com/) for this template.
+- `setup.py` (or pyproject.toml) contains the packaging instructions (see below).
 
-## Suggestions for a good README
-
-Every project is different, so consider which of these sections apply to yours. The sections used in the template are suggestions for most open source projects. Also keep in mind that while a README can be too long and detailed, too long is better than too short. If you think your README is too long, consider utilizing another form of documentation rather than cutting out information.
-
-## Name
-Choose a self-explaining name for your project.
-
-## Description
-Let people know what your project can do specifically. Provide context and add a link to any reference visitors might be unfamiliar with. A list of Features or a Background subsection can also be added here. If there are alternatives to your project, this is a good place to list differentiating factors.
-
-## Badges
-On some READMEs, you may see small images that convey metadata, such as whether or not all the tests are passing for the project. You can use Shields to add some to your README. Many services also have instructions for adding a badge.
-
-## Visuals
-Depending on what you are making, it can be a good idea to include screenshots or even a video (you'll frequently see GIFs rather than actual videos). Tools like ttygif can help, but check out Asciinema for a more sophisticated method.
-
-## Installation
-Within a particular ecosystem, there may be a common way of installing things, such as using Yarn, NuGet, or Homebrew. However, consider the possibility that whoever is reading your README is a novice and would like more guidance. Listing specific steps helps remove ambiguity and gets people to using your project as quickly as possible. If it only runs in a specific context like a particular programming language version or operating system or has dependencies that have to be installed manually, also add a Requirements subsection.
-
-## Usage
-Use examples liberally, and show the expected output if you can. It's helpful to have inline the smallest example of usage that you can demonstrate, while providing links to more sophisticated examples if they are too long to reasonably include in the README.
-
-## Support
-Tell people where they can go to for help. It can be any combination of an issue tracker, a chat room, an email address, etc.
-
-## Roadmap
-If you have ideas for releases in the future, it is a good idea to list them in the README.
-
-## Contributing
-State if you are open to contributions and what your requirements are for accepting them.
-
-For people who want to make changes to your project, it's helpful to have some documentation on how to get started. Perhaps there is a script that they should run or some environment variables that they need to set. Make these steps explicit. These instructions could also be useful to your future self.
-
-You can also document commands to lint the code or run tests. These steps help to ensure high code quality and reduce the likelihood that the changes inadvertently break something. Having instructions for running tests is especially helpful if it requires external setup, such as starting a Selenium server for testing in a browser.
-
-## Authors and acknowledgment
-Show your appreciation to those who have contributed to the project.
-
-## License
-For open source projects, say how it is licensed.
-
-## Project status
-If you have run out of energy or time for your project, put a note at the top of the README saying that development has slowed down or stopped completely. Someone may choose to fork your project or volunteer to step in as a maintainer or owner, allowing your project to keep going. You can also make an explicit request for maintainers.
+- `README.md` explains DEVO’s purpose and usage to end users (recommended by packaging best practices.
