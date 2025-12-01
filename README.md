@@ -1,8 +1,29 @@
 
-
 # DEVO 
 <img title="whip it" alt="whip it good"  height="50" src="/images/DEVO_Pixels_1.webp"><br>
-Data Enrichment and Validation Operator (DEVO) provides a simple command-line tool and library to enrich CSV files into the standardized “iCSV” format (with embedded metadata) and then validate the data using the Frictionless framework. 
+
+## Table of contents
+
+* [File structure](#file-structure)
+* [iCSV format](#icsv-format-quick-overview)
+* [CLI usage](#cli-usage)
+* [Python API](#python-api)
+* [Configuration](#configuration)
+* [Example run (end-to-end)](#example-run-end-to-end)
+* [Troubleshooting & common errors](#troubleshooting--common-errors)
+* [Contributing](#contributing)
+* [License](#license)
+
+
+Data Enrichment and Validation Operator (DEVO) provides a simple command-line tool and library to enrich CSV files into the standardized “iCSV” format (with embedded metadata) and then validate the data using the Frictionless framework. More specifically, it will:
+
+* Convert `*.csv` → `*.icsv` (iCSV format with `# [METADATA]`, `# [FIELDS]`, `# [DATA]`).
+* Infer Frictionless-compatible schema (`*_schema.json`) automatically.
+* Validate data with Frictionless and produce human-friendly text reports (`*_data_report.txt`, `*_metadata_report.txt`).
+* Configurable via YAML/JSON config file or CLI flags.
+* Lightweight, documented, with tests via `pytest`.
+* Includes helpful suggestions for common error codes (type mismatches, missing cells, extra cells, duplicate labels).
+
 It supports two modes: if given a plain `.csv`, DEVO will infer metadata and output an `.icsv` (with METADATA, FIELDS, and DATA sections) and then validate it; if given an existing `.icsv`, DEVO will skip enrichment and only perform validation. 
 The Frictionless library is used to infer schema and validate data, producing detailed, user-friendly error reports.
 
@@ -43,103 +64,227 @@ tests/
 
 - `README.md` explains DEVO’s purpose and usage to end users (recommended by packaging best practices.
 
-## CSV Enrichment (iCSV Generation)
-
-When given a plain `.csv` file, DEVO performs the following steps to create an `iCSV`:
-
-- Read and sample the `CSV`. DEVO detects the delimiter (comma, tab, pipe, etc.) using Python’s `csv.Sniffer` or similar heuristics. DEVO then loads the header row (column names) and all data rows.
-
-- Infer field types and statistics. For each column, DEVO proposes a simple type (integer, number, datetime, or string) by examining its values.
-
-- DEVO uses regular expressions and date parsing (optionally via dateutil.parser) to classify values. For numeric columns it computes minimum and maximum; for datetime it computes min/max in ISO format. It also count missing values (common placeholders like NA, null, etc., are treated as “missing”). If a column has no missing values, DEVO marks it as required in the schema.
-
-- DEVO builds lines for the METADATA section of the iCSV. This includes required keys like `iCSV_version = 1.0`, `field_delimiter = {delim}`, plus optional keys like `generator = DEVO <version>`, `c`reation_date`, `srid`, etc. (These follow the iCSV specification.) 
-
-        For example:
-
-        ```
-        # iCSV 1.0 UTF-8
-        # [METADATA]
-        # iCSV_version = 1.0
-        # field_delimiter = |
-        # columns = 5
-        # rows = 123
-        # creation_date = 2025-10-01T12:34:56Z
-        # nodata = -999
-        # ...
-        ```
-
-        DEVO will include any user-provided hints (e.g. a --nodata argument or a config override) here.
-
-- Build the fields section. Under # [FIELDS], DEVO lists `fields = name1|name2|...` (the column names) and other aligned lists (types, min, max, missing count, etc.) separated by the same delimiter. 
-
-        For instance:
-        ```
-        # [FIELDS]
-        # fields = timestamp|temperature|humidity
-        # types = datetime|number|number
-        # min = 2020-01-01T00:00:00|10.0|0.0
-        # max = 2021-01-01T00:00:00|35.7|1.0
-        # missing_count = 0|5|2
-        ```
-
-        This section fully describes each column (long_name, units, etc., could be added similarly if available).
-
-- Write the iCSV file. According to the iCSV spec, the file starts with `# iCSV 1.0 UTF-8`, then `# [METADATA]` block, then `# [FIELDS]` block, then `# [DATA]`. In the DATA section, no lines begin with #. DEVO writes each data row (values separated by field_delimiter). Importantly, DEVO does not repeat the header row under `# [DATA]`—the fields are already defined in metadata. 
-
-        For example:
-        ```
-        # [DATA]
-        2020-01-01T00:00:00Z|15.2|0.85
-        2020-01-01T01:00:00Z|15.1|0.87
-        ...
-        ```
 
 
-## Data Validation (Schema & Error Reporting)
+## iCSV format (quick overview)
 
-After enrichment (or if an .icsv is already provided), DEVO validates the data:
-
-- Parse `METADATA` and `FIELDS`. DEVO will read the `iCSV` and extract the key metadata and field lists. For each # key = value line under `# [METADATA]` and `# [FIELDS]`, DEVO strips the leading # and parse keys and values. It verifies that required metadata (like field_delimiter, geometry, srid) and the fields list are present. Any problems here generate errors. Fun!
-
-- Extract the `DATA` rows. DEVO locates the `# [DATA]` marker and reads all following lines (ignoring lines that start with #). It then splits each line using the discovered `field_delimiter` to get raw data values. (Note: DEVO dynamically uses the metadata’s delimiter.)
-
-- Build a Frictionless schema. Using the field names from metadata and the parsed rows, DEVO constructs a `.JSON` table schema compatible with Frictionless. This schema lists each field’s name, type, format (if needed), description, and constraints (minimum, maximum, required, etc.).DEVO can reuse the same inference logic from enrichment: for each column, use the collected values to determine type and constraints. 
-
-        For example:
-        ```
-        {
-        "fields": [
-            {"name": "timestamp", "type": "datetime", "format": "any", "constraints": {"required": true}},
-            {"name": "temperature", "type": "number", "minimum": -50, "maximum": 60},
-            {"name": "humidity", "type": "number", "minimum": 0, "maximum": 1}
-        ],
-        "missingValues": ["", "NA", "null"]
-        }
-        ```
-
-- Validate with Frictionless. DEVO uses frictionless.Resource to validate the data rows against the schema. 
-
-        For example:
-        ```
-        from frictionless import Resource
-
-        # (Assume data_rows is a list of lists, and schema_json is the schema dict)
-        # Write data_rows to a temporary CSV file or feed directly if supported:
-        resource = Resource(path=temporary_csv_path, schema=schema_path_or_dict)
-        report = resource.validate()
-        ```
-
-DEVO relies Frictionless to produces a report of all detected issues. 
-
-For example, it will flag duplicate or blank column labels, type mismatches (e.g. text in a numeric field), missing cells, extra cells, etc. Each error includes the row number, field number, an error code (like type-error, missing-cell), and a descriptive message.
-
-- Write a readable error report. DEVO collects the validation errors and formats them into a text report (`<input>_data_report.txt` by default). If the data is valid, DEVO will write `"Data validation [OK]"`. Otherwise, it will iterate over `report.flatten(...)` and write lines such as:
+DEVO follows this structure for iCSV files:
 
 ```
-ERROR: Row 12, Column 3 [type-error]: Type error: cannot parse "abc" as integer
-ERROR: Row 25, Column 1 [missing-cell]: Missing value in field "timestamp"
+# iCSV 1.0 UTF-8
+# [METADATA]
+# key = value
+# ...
+
+# [FIELDS]
+# fields = col1|col2|col3
+# types = datetime|number|string
+# min = ...
+# max = ...
+# missing_count = ...
+# description = ...
+
+# [DATA]
+col1|col2|col3
+row1col1|row1col2|row1col3
+...
 ```
 
-Since the error report will be the primary mode of user interface with this process, messages have been written to be kind and helpful. For example, if a numeric field has non-numeric text, the message suggests the value is wrong type. 
-Frictionless’s messages are usually clear, but DEVO will also prepend tips like “Check that all values are valid numbers/date”.) The emphasis is on helping users locate and fix problems. 
+* Metadata and fields lines must be prepended with `#`.
+* The `field_delimiter` is stored in METADATA and governs how the DATA section is parsed.
+* DEVO writes a header row in the DATA section for compatibility with tools; remove it if you require strict iCSV formatting (configurable).
+
+
+## CLI usage
+
+Basic usage:
+
+```bash
+devo path/to/file.csv
+# or validate an existing iCSV:
+devo path/to/file.icsv
+```
+
+CLI flags:
+
+```
+usage: devo [-h] [--config CONFIG] [--delimiter DELIMITER]
+            [--nodata NODATA] [--app APP] [--schema-out SCHEMA_OUT]
+            [--out OUT]
+            infile
+```
+
+Key options:
+
+* `--config / -c PATH` : YAML or JSON config file path.
+* `--delimiter / -d` : force input delimiter (auto-detected by default).
+* `--nodata` : force the nodata placeholder.
+* `--app` : application profile for the iCSV first line.
+* `--schema-out` : write schema to a custom path.
+* `--out` : specify output iCSV path.
+
+Example (force pipe delimiter and nodata):
+
+```bash
+devo sample.csv --delimiter '|' --nodata -999
+```
+
+Outputs (default, per input `data.csv`):
+
+* `data.icsv` — the enriched iCSV file.
+* `data_schema.json` — inferred Frictionless schema.
+* `data_metadata_report.txt` — metadata consistency checks.
+* `data_data_report.txt` — validation summary & errors.
+
+
+## Python API
+
+Import and use programmatically.
+
+```python
+from devo.enrichment import make_icsv_from_csv
+from devo.validation import validate_icsv
+
+icsv_path, schema_path = make_icsv_from_csv("sample.csv")
+valid, report_path = validate_icsv(icsv_path)
+
+print("iCSV:", icsv_path)
+print("schema:", schema_path)
+print("valid:", valid)
+print("report:", report_path)
+```
+
+Function summaries:
+
+* `make_icsv_from_csv(infile, out_icsv=None, out_schema=None, user_delimiter=None, nodata_override=None, application_profile=None)`
+  Returns `(out_icsv_path, out_schema_path)`.
+
+* `validate_icsv(infile, out_report=None)`
+  Returns `(is_valid_bool, out_report_path)`.
+
+
+## Configuration
+
+DEVO supports a config file (YAML or JSON). Example `devo.yaml`:
+
+```yaml
+application_profile: "DEVO_DEFAULT"
+field_delimiter: "|"
+nodata: "-999"
+out_icsv: null
+schema_out: null
+```
+
+Load via `--config devo.yaml` or place values as CLI flags (CLI flags take precedence).
+
+
+## Example run (end-to-end)
+
+Create a sample CSV:
+
+```csv
+# file: sample_valid.csv
+timestamp,ta,rh
+2020-01-01T00:00:00,10,0.5
+2020-01-01T01:00:00,12,0.55
+```
+
+Run:
+
+```bash
+devo sample_valid.csv
+```
+
+Expected files:
+
+* `sample_valid.icsv` — contains METADATA, FIELDS, DATA
+* `sample_valid_schema.json` — inferred schema
+* `sample_valid_metadata_report.txt` — metadata OK message
+* `sample_valid_data_report.txt` — contains `Data validation [OK]` for valid data
+
+For invalid sample:
+
+```csv
+# file: sample_bad.csv
+timestamp,ta
+2020-01-01T00:00:00,10
+2020-01-01T01:00:00,not_a_number
+```
+
+Run:
+
+```bash
+devo sample_bad.csv
+# data report will contain a type-error and a friendly suggestion
+```
+
+Open the report:
+
+```bash
+less sample_bad_data_report.txt
+```
+
+## Troubleshooting & common errors
+
+### `ModuleNotFoundError: No module named 'devo'`
+
+* Likely cause: you ran `pip install -e .` from the wrong directory, or the project root is misstructured (package folder and packaging metadata must not be the same directory).
+* Fix:
+
+  * Ensure `pyproject.toml` / `setup.py` are in the project root and there is a **subfolder** `devo/` containing `__init__.py`.
+  * Reinstall: `pip uninstall -y devo && pip install -e .`
+
+### `TypeError: unsupported operand type(s) for |: 'type' and 'NoneType'`
+
+* Cause: code used Python 3.10 union `str | None` syntax but running on Python 3.9.
+* Fix: Use `Optional[str]` or upgrade Python to 3.10+.
+
+### `ValueError: Invalid suffix '_schema.json'`
+
+* Cause: calling `Path.with_suffix('_schema.json')` (invalid suffix).
+* Fix: use `infile.with_name(infile.stem + "_schema.json")` or `infile.with_suffix('.json')` and assemble filename.
+
+### Delimiter issues
+
+* If DEVO mis-detects delimiter or your data uses a special delimiter, pass `--delimiter` or set `field_delimiter` in the config file.
+
+### Validation exceptions from Frictionless
+
+* Inspect the generated `*_schema.json` and `*_data_report.txt`. Adjust schema or clean data accordingly.
+
+If an error persists, collect the traceback and the following diagnostics and open an issue (or paste here):
+
+```bash
+python -V
+which python          # or .venv/bin/python -c "import sys; print(sys.executable)"
+pip show devo
+ls -la
+ls -la devo
+sed -n '1,160p' .venv/bin/devo
+```
+
+
+## Contributing
+
+Contributions welcome!
+
+* Open an issue to discuss larger changes.
+* For small fixes, open a PR against `main`.
+* Tests: add `pytest` tests under `tests/`.
+* Formatting: use `black` and `isort`.
+* CI suggestion: GitHub Actions that runs tests across Python 3.9–3.11, builds package, and runs linters.
+
+Suggested workflow:
+
+```bash
+git clone <repo>
+git checkout -b feature/your-feature
+pip install -e .[dev]
+pytest
+# make changes, add tests, open PR
+```
+
+
+## License
+
+DEVO is distributed under the **MIT License**. See `LICENSE` for full text.
