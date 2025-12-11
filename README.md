@@ -252,7 +252,7 @@ less sample_bad_data_report.txt
 
 * Inspect the generated `*_schema.json` and `*_data_report.txt`. Adjust schema or clean data accordingly.
 
-If an error persists, collect the traceback and the following diagnostics and open an issue (or paste here):
+If an error persists, collect the traceback and the following diagnostics and open an issue
 
 ```bash
 python -V
