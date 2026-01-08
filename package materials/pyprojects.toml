@@ -1,0 +1,46 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "devo"
+version = "0.1.0"
+description = "DEVO — Data Enrichment and Validation Operator: Enrich CSV → iCSV and validate using Frictionless."
+readme = "README.md"
+requires-python = ">=3.9"
+license = {text = "MIT"}
+authors = [
+    { name="Chase Núñez", email="chase.nunez@eawag.ch" }
+]
+keywords = ["csv", "icsv", "validation", "metadata", "frictionless"]
+
+# Core dependencies
+dependencies = [
+    "frictionless",
+    "psycopg2-binary",
+    "python-dateutil",
+]
+
+# Optional testing dependencies (not installed by default)
+[project.optional-dependencies]
+dev = [
+    "pytest",
+    "pytest-cov",
+]
+
+[project.scripts]
+devo = "devo.cli:main"
+
+[tool.setuptools]
+# The package lives in the 'devo' directory
+packages = ["devo"]
+
+[tool.setuptools.package-data]
+# Include config examples, images, and any YAML files you need in the package
+"devo" = ["config_examples.yaml", "images/DEVO_Pixels_1.webp"]
+
+[project.urls]
+Homepage = "https://github.com/chasenunez/DEVO"
+Documentation = "https://github.com/chasenunez/DEVO"
+Source = "https://github.com/chasenunez/DEVO"
+Issues = "hhttps://github.com/chasenunez/DEVO/issues"
