@@ -1,1 +1,0 @@
-FORMATS = ["png", "jpg"]

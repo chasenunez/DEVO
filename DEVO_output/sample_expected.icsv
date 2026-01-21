@@ -1,0 +1,32 @@
+# iCSV 1.0 UTF-8
+# [METADATA]
+# field_delimiter = |
+# rows = 15
+# columns = 1
+# creation_date = 2026-01-21T08:43:26.624964Z
+# generator = DEVO (python)
+
+# [FIELDS]
+# fields = # iCSV 1.0 UTF-8
+# types = string
+# min = 
+# max = 
+# missing_count = 2
+
+# [DATA]
+# iCSV 1.0 UTF-8
+# [METADATA]
+"# field_delimiter = |"
+# rows = 3
+# columns = 3
+# creation_date = 2026-01-21T00:00:00Z
+# generator = DEVO (python)
+""
+# [FIELDS]
+"# fields = timestamp|PSUM|TA"
+"# types = datetime|integer|number"
+""
+# [DATA]
+"2005-08-23T15:30:00|0|12.5"
+"2005-08-23T16:30:00|1|13.0"
+"2005-08-23T17:30:00|0|12.8"

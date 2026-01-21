@@ -1,0 +1,23 @@
+{
+  "fields": [
+    {
+      "name": "# iCSV 1.0 UTF-8",
+      "type": "string",
+      "missing_count": 4
+    }
+  ],
+  "missingValues": [
+    "",
+    "NULL",
+    "N/A",
+    "NA",
+    "-999.000000",
+    "n/a",
+    "-999.0",
+    "na",
+    "NaN",
+    "null",
+    "-999",
+    "nan"
+  ]
+}

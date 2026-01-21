@@ -1,9 +1,0 @@
-from __future__ import annotations
-
-# General
-
-DEFAULT_DELIMITER = ","
-DEFAULT_LINE_TERMINATOR = "\r\n"
-DEFAULT_QUOTE_CHAR = '"'
-DEFAULT_DOUBLE_QUOTE = True
-FIELD_SIZE_LIMIT = 2147483646

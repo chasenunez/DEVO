@@ -1,0 +1,170 @@
+{
+  "fields": [
+    {
+      "name": "date",
+      "type": "string",
+      "constraints": {
+        "required": true
+      },
+      "missing_count": 0
+    },
+    {
+      "name": "actual_mean_temp",
+      "type": "integer",
+      "min": 18,
+      "max": 88,
+      "constraints": {
+        "minimum": 18,
+        "maximum": 88,
+        "required": true
+      },
+      "missing_count": 0
+    },
+    {
+      "name": "actual_min_temp",
+      "type": "integer",
+      "min": 7,
+      "max": 75,
+      "constraints": {
+        "minimum": 7,
+        "maximum": 75,
+        "required": true
+      },
+      "missing_count": 0
+    },
+    {
+      "name": "actual_max_temp",
+      "type": "integer",
+      "min": 26,
+      "max": 100,
+      "constraints": {
+        "minimum": 26,
+        "maximum": 100,
+        "required": true
+      },
+      "missing_count": 0
+    },
+    {
+      "name": "average_min_temp",
+      "type": "integer",
+      "min": 29,
+      "max": 68,
+      "constraints": {
+        "minimum": 29,
+        "maximum": 68,
+        "required": true
+      },
+      "missing_count": 0
+    },
+    {
+      "name": "average_max_temp",
+      "type": "integer",
+      "min": 50,
+      "max": 89,
+      "constraints": {
+        "minimum": 50,
+        "maximum": 89,
+        "required": true
+      },
+      "missing_count": 0
+    },
+    {
+      "name": "record_min_temp",
+      "type": "integer",
+      "min": -5,
+      "max": 62,
+      "constraints": {
+        "minimum": -5,
+        "maximum": 62,
+        "required": true
+      },
+      "missing_count": 0
+    },
+    {
+      "name": "record_max_temp",
+      "type": "integer",
+      "min": 69,
+      "max": 104,
+      "constraints": {
+        "minimum": 69,
+        "maximum": 104,
+        "required": true
+      },
+      "missing_count": 0
+    },
+    {
+      "name": "record_min_temp_year",
+      "type": "integer",
+      "min": 1879,
+      "max": 2015,
+      "constraints": {
+        "minimum": 1879,
+        "maximum": 2015,
+        "required": true
+      },
+      "missing_count": 0
+    },
+    {
+      "name": "record_max_temp_year",
+      "type": "integer",
+      "min": 1879,
+      "max": 2015,
+      "constraints": {
+        "minimum": 1879,
+        "maximum": 2015,
+        "required": true
+      },
+      "missing_count": 0
+    },
+    {
+      "name": "actual_precipitation",
+      "type": "number",
+      "min": 0.0,
+      "max": 2.65,
+      "constraints": {
+        "minimum": 0.0,
+        "maximum": 2.65,
+        "required": true
+      },
+      "missing_count": 0
+    },
+    {
+      "name": "average_precipitation",
+      "type": "number",
+      "min": 0.09,
+      "max": 0.15,
+      "constraints": {
+        "minimum": 0.09,
+        "maximum": 0.15,
+        "required": true
+      },
+      "missing_count": 0
+    },
+    {
+      "name": "record_precipitation",
+      "type": "number",
+      "min": 0.85,
+      "max": 6.88,
+      "constraints": {
+        "minimum": 0.85,
+        "maximum": 6.88,
+        "required": true
+      },
+      "missing_count": 0
+    }
+  ],
+  "missingValues": [
+    "",
+    "NULL",
+    "N/A",
+    "NA",
+    "-999.000000",
+    "n/a",
+    "-999.0",
+    "na",
+    "NaN",
+    "null",
+    "-999",
+    "nan"
+  ]
+}

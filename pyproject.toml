@@ -1,0 +1,19 @@
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "devo"
+version = "0.1.0"
+description = "DEVO — CSV -> iCSV enrichment + Frictionless validation tooling"
+readme = "README.md"
+license = {text = "MIT"}
+requires-python = ">=3.9"
+
+dependencies = [
+  "frictionless>=4.0.0",
+  "flask>=2.0.0"
+]
+
+[project.urls]
+"Source" = "https://example.org/devo"

@@ -1,0 +1,110 @@
+{
+  "fields": [
+    {
+      "name": "airline",
+      "type": "string",
+      "constraints": {
+        "required": true
+      },
+      "missing_count": 0
+    },
+    {
+      "name": "avail_seat_km_per_week",
+      "type": "integer",
+      "min": 259373346,
+      "max": 7139291291,
+      "constraints": {
+        "minimum": 259373346,
+        "maximum": 7139291291,
+        "required": true
+      },
+      "missing_count": 0
+    },
+    {
+      "name": "incidents_85_99",
+      "type": "integer",
+      "min": 0,
+      "max": 76,
+      "constraints": {
+        "minimum": 0,
+        "maximum": 76,
+        "required": true
+      },
+      "missing_count": 0
+    },
+    {
+      "name": "fatal_accidents_85_99",
+      "type": "integer",
+      "min": 0,
+      "max": 14,
+      "constraints": {
+        "minimum": 0,
+        "maximum": 14,
+        "required": true
+      },
+      "missing_count": 0
+    },
+    {
+      "name": "fatalities_85_99",
+      "type": "integer",
+      "min": 0,
+      "max": 535,
+      "constraints": {
+        "minimum": 0,
+        "maximum": 535,
+        "required": true
+      },
+      "missing_count": 0
+    },
+    {
+      "name": "incidents_00_14",
+      "type": "integer",
+      "min": 0,
+      "max": 24,
+      "constraints": {
+        "minimum": 0,
+        "maximum": 24,
+        "required": true
+      },
+      "missing_count": 0
+    },
+    {
+      "name": "fatal_accidents_00_14",
+      "type": "integer",
+      "min": 0,
+      "max": 3,
+      "constraints": {
+        "minimum": 0,
+        "maximum": 3,
+        "required": true
+      },
+      "missing_count": 0
+    },
+    {
+      "name": "fatalities_00_14",
+      "type": "integer",
+      "min": 0,
+      "max": 537,
+      "constraints": {
+        "minimum": 0,
+        "maximum": 537,
+        "required": true
+      },
+      "missing_count": 0
+    }
+  ],
+  "missingValues": [
+    "",
+    "NULL",
+    "N/A",
+    "NA",
+    "-999.000000",
+    "n/a",
+    "-999.0",
+    "na",
+    "NaN",
+    "null",
+    "-999",
+    "nan"
+  ]
+}
