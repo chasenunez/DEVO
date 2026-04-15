@@ -1,6 +1,6 @@
 
 # DEVO 
-<img title="whip it" alt="whip it good"  height="50" src="/images/DEVO_Pixels_1.webp"><br>
+<img title="whip it" alt="you know you should"  height="50" src="/images/DEVO_Pixels_1.webp"><br>
 
 ## Table of contents
 
