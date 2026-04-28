@@ -41,6 +41,6 @@ def index():
                 icsv, schema = enr.make_icsv(str(infile), str(outdir))
                 report, valid = validate_icsv(icsv, schema_path=schema, outdir=str(outdir))
                 message = f"iCSV: {icsv}\nSchema: {schema}\nReport: {report}\nValid: {valid}"
-            except Exception as e:
+            except Exception as e:  # top-level demo catch-all; render any error to the UI rather than 500
                 message = f"Error: {e}"
     return render_template_string(TEMPLATE, message=message)

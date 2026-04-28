@@ -16,7 +16,7 @@ import csv
 import json
 import os
 from itertools import islice
-from datetime import datetime
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
 import re
@@ -34,8 +34,7 @@ class ICSVEnricher:
         try:
             dialect = csv.Sniffer().sniff(sample, delimiters=[",", "|", ";", ":", "\t", "/"])
             return dialect.delimiter
-        except Exception:
-            # fallback
+        except csv.Error:
             return ","
 
     def load_rows(self, path: str, user_delimiter: Optional[str] = None) -> Tuple[List[str], List[List[str]]]:
@@ -97,7 +96,7 @@ class ICSVEnricher:
         try:
             datetime.fromisoformat(s)
             return True
-        except Exception:
+        except (ValueError, TypeError):
             return False
 
     def build_schema(self, header: List[str], rows: List[List[str]], nodata: str) -> Dict[str, Any]:
@@ -125,7 +124,7 @@ class ICSVEnricher:
                     field.setdefault("constraints", {})
                     field["constraints"]["minimum"] = field["min"]
                     field["constraints"]["maximum"] = field["max"]
-                except Exception:
+                except (ValueError, TypeError):
                     pass
             if t == "datetime" and pruned:
                 try:
@@ -136,7 +135,7 @@ class ICSVEnricher:
                         field["max"] = max(dts).isoformat()
                         field["constraints"]["minimum"] = field["min"]
                         field["constraints"]["maximum"] = field["max"]
-                except Exception:
+                except (ValueError, TypeError):
                     pass
             if pruned and missing_count == 0:
                 field.setdefault("constraints", {})
@@ -177,7 +176,7 @@ class ICSVEnricher:
             "field_delimiter": icsv_delim,
             "rows": str(len(rows)),
             "columns": str(len(header)),
-            "creation_date": datetime.utcnow().isoformat() + "Z",
+            "creation_date": datetime.now(timezone.utc).isoformat().replace("+00:00", "Z"),
             "generator": "DEVO (python)"
         }
         if nodata:

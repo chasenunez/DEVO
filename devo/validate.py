@@ -60,7 +60,7 @@ def extract_data_to_csv(icsv_path: str, out_csv: str, field_delimiter: str) -> i
 def validate_with_frictionless(clean_csv: str, schema_path: str):
     try:
         from frictionless import Resource
-    except Exception as e:
+    except ImportError as e:
         raise RuntimeError("The 'frictionless' package is required to run validation. Please install it (pip install frictionless)") from e
     resource = Resource(path=clean_csv, schema=schema_path)
     report = resource.validate()
@@ -91,6 +91,6 @@ def validate_icsv(icsv_path: str, schema_path: Optional[str] = None, outdir: str
     # cleanup
     try:
         tmp_csv.unlink()
-    except Exception:
+    except OSError:
         pass
     return str(report_path), report.valid
