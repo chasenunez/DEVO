@@ -1,7 +1,7 @@
 # DEVO
 <img title="whip it" alt="you know you should" height="50" src="/images/DEVO_Pixels_1.webp">
 
-**Data Enrichment and Validation Operator.** Takes a plain CSV, infers types and constraints, writes a self-documenting [iCSV](https://envidat.github.io/iCSV/) file plus a Frictionless schema, and validates the data against it.
+**Data [Enrichment](https://github.com/chasenunez/DEVO_enricher) and [Validation Operator](https://github.com/chasenunez/DEVO_validator).** Takes a plain CSV, infers types and constraints, writes a self-documenting [iCSV](https://envidat.github.io/iCSV/) file plus a Frictionless schema, and validates the data against it.
 
 If you give it a `.csv`, it enriches → schema → validates. If you give it an `.icsv`, it skips the enrichment step.
 
