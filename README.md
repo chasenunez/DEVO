@@ -3,8 +3,13 @@
 
 If you give it a `.csv`, it enriches → schema → validates. If you give it an `.icsv`, it skips enrichment.
 
-## Install
 
+## Install from PyPI
+```bash
+pip install py-devo
+```
+
+## Install from local cloned repository
 ```bash
 pip install -e .
 ```
