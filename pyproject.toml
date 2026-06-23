@@ -3,7 +3,7 @@ requires = ["setuptools>=61.0", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "devo"
+name = "py-devo"
 version = "0.2.0"
 description = "DEVO — CSV to iCSV enrichment and Frictionless validation"
 readme = "README.md"
@@ -21,7 +21,7 @@ webui = ["flask>=2.0.0"]
 devo = "devo.cli:main"
 
 [project.urls]
-Source = "https://github.com/envidat/devo"
+Source = "https://github.com/chasenunez/devo"
 
 [tool.setuptools.packages.find]
 include = ["devo*"]

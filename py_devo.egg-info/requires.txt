@@ -1,0 +1,4 @@
+frictionless>=4.0.0
+
+[webui]
+flask>=2.0.0
