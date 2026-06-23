@@ -1,0 +1,4 @@
+an_int,a_float,a_date,a_string
+1,1.5,2005-08-23,hello
+2,2.7,2005-08-24,world
+3,3.1,2005-08-25,foo

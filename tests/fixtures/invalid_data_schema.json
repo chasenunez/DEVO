@@ -1,0 +1,11 @@
+{
+  "fields": [
+    {"name": "id", "type": "integer"},
+    {
+      "name": "temp",
+      "type": "number",
+      "constraints": {"minimum": -50, "maximum": 50}
+    }
+  ],
+  "missingValues": ["", "-999"]
+}

@@ -3,7 +3,7 @@
 
 **Data Enrichment and Validation Operator.** Takes a plain CSV, infers types and constraints, writes a self-documenting [iCSV](https://envidat.github.io/iCSV/) file plus a Frictionless schema, and validates the data against it.
 
-If you give it a `.csv`, it enriches → schema → validates. If you give it an `.icsv`, it skips the enrichment step.
+If you give it a `.csv`, it enriches → schema → validates. If you give it an `.icsv`, it skips enrichment.
 
 ## Install
 
@@ -11,7 +11,13 @@ If you give it a `.csv`, it enriches → schema → validates. If you give it an
 pip install -e .
 ```
 
-Requires Python 3.9+ and `frictionless`.
+For the Flask web demo:
+
+```bash
+pip install -e ".[webui]"
+```
+
+Requires Python 3.9+ and `frictionless` (v4 or v5).
 
 ## CLI
 
@@ -21,7 +27,9 @@ devo validate data.icsv                   # validate against neighbouring schema
 devo run      data.csv                    # do both in one go
 ```
 
-Common flags: `--out DIR` (default `DEVO_output/`), `--delimiter`, `--nodata`, `--schema PATH`.
+Common flags: `--out DIR` (default `DEVO_output/`), `--delimiter CHAR`, `--nodata VALUE`, `--app PROFILE`, `--schema PATH`.
+
+Exit codes: `0` = success, `1` = validation failed, `2` = usage or runtime error.
 
 ## What lands on disk
 
@@ -30,8 +38,8 @@ For input `data.csv`, after `devo run`:
 | File | What |
 |---|---|
 | `DEVO_output/data.icsv` | iCSV with `# [METADATA]`, `# [FIELDS]`, `# [DATA]` |
-| `DEVO_output/data_schema.json` | Frictionless schema |
-| `DEVO_output/data_DEVO_report.md` | Validation report (read this) |
+| `DEVO_output/data_schema.json` | Frictionless Table Schema JSON |
+| `DEVO_output/data_DEVO_report.txt` | Validation report (read this) |
 
 ## Python API
 
@@ -39,7 +47,7 @@ For input `data.csv`, after `devo run`:
 from devo.enrich import ICSVEnricher
 from devo.validate import validate_icsv
 
-icsv, schema = ICSVEnricher().make_icsv("sample.csv", "DEVO_output")
+icsv, schema = ICSVEnricher().make_icsv("data.csv", "DEVO_output")
 report_path, valid = validate_icsv(icsv, schema_path=schema)
 ```
 
@@ -47,27 +55,47 @@ report_path, valid = validate_icsv(icsv, schema_path=schema)
 
 ```
 devo/
-├── cli.py        # argparse front-end (enrich / validate / run)
-├── enrich.py     # CSV → iCSV + schema (ICSVEnricher class)
-├── validate.py   # iCSV + schema → Frictionless validation report
-└── webui.py      # tiny Flask demo for upload-and-validate
-examples/sample.csv
-tests/test_syntax_only.py
+├── cli.py          # argparse front-end (enrich / validate / run)
+├── enrich.py       # CSV → iCSV + schema (ICSVEnricher class)
+├── validate.py     # iCSV + schema → Frictionless validation + report
+├── _infer.py       # pure type-inference functions (shared by enrich + validate)
+├── _parser.py      # iCSV header parser (shared by enrich + validate)
+├── _schema.py      # per-column statistics + Frictionless schema builder
+├── _report.py      # plain-text report writer
+├── exceptions.py   # DEVOError hierarchy
+└── webui.py        # Flask demo (optional; requires pip install -e ".[webui]")
+tests/
+├── conftest.py
+├── fixtures/       # sample CSV and iCSV files
+└── test_*.py
 ```
 
-## Web UI (demo)
+## How it works
 
-```bash
-python -m flask --app devo.webui run
-```
+### Enrichment (`devo enrich`)
 
-It's a one-page upload form. Useful for showing a researcher what the tool does without dragging them into a terminal.
+1. **Read** — the CSV is read in one pass. If no `--delimiter` is given, `csv.Sniffer` detects it from the first 10 lines.
+2. **Delimiter mapping** — comma is remapped to pipe in the iCSV output (pipe is also the default fallback for non-spec delimiters). Column names that contain the output delimiter are rejected with a clear error.
+3. **Normalisation** — every row is padded or clipped to header length and stripped of leading/trailing whitespace.
+4. **Type inference** — each column is classified: `integer → number → datetime → string`. Scientific notation (`1.5e-3`, `2E10`) is recognised as `number`. Missing-value sentinels (and any custom `--nodata` value) are excluded before inference.
+5. **Statistics** — per-column `min`, `max`, and `missing_count` are computed from the normalised data and written to the iCSV `# [FIELDS]` section. They do not appear in the Frictionless schema JSON.
+6. **Geometry detection** — if the header contains `lat`/`latitude` + `lon`/`lng`/`longitude`, DEVO writes `geometry = column:lat,lon` and `srid = EPSG:4326` to metadata. A single column named `geometry` (WKT) gets `geometry = column:geometry` only — no `srid`, because WKT embeds its own CRS.
+7. **Write** — the normalised rows are written to the iCSV `# [DATA]` section, and the Frictionless schema is written to `_schema.json`.
+
+### Validation (`devo validate`)
+
+1. **Parse header** — `_parser.py` reads the `# [METADATA]` and `# [FIELDS]` sections, using `field_delimiter` from metadata to split field values.
+2. **Metadata check** — required keys are verified. `geometry` and `srid` are only checked when spatial column names are present; `srid` is only required for lat/lon columns (not WKT).
+3. **Type cross-check (Option A)** — column types are re-inferred from up to 500 data rows and compared to the declared types. The iCSV's own `nodata` sentinel is merged with the standard missing-value set before re-inference so custom sentinels are not mistaken for real data. Inferred type narrower than or equal to declared → `[OK]`. Inferred wider → `[WARN]`.
+4. **Frictionless validation** — data is written to a temporary comma-delimited CSV and validated against the schema using `frictionless.Resource`. The temp file is always deleted in a `finally` block.
+5. **Report** — a plain-text `.txt` report is written with three sections: `METADATA`, `TYPE CONSISTENCY`, and `DATA VALIDATION`. `Valid: YES` only when metadata has no `[FAIL]` entries and Frictionless reports no data errors. Type warnings do not affect the valid flag.
 
 ## Limitations
 
-- Type inference is conservative: integer → number → datetime → string. Mixed-format columns fall back to `string`.
-- Datetime detection relies on `datetime.fromisoformat()` and a small list of common formats. Anything weirder needs a custom schema.
-- Column descriptions are left blank; fill them in by hand or post-process the schema.
+- Type inference is conservative: `integer → number → datetime → string`. Mixed-format columns fall back to `string`.
+- Datetime detection uses `datetime.fromisoformat()` and a fixed list of common strptime formats. Unusual formats need a custom schema.
+- Column descriptions are left blank in the iCSV `# [FIELDS]` section; fill them in by hand.
+- The web UI (`webui.py`) is a local demo only — do not expose it to a network.
 
 ## License
 

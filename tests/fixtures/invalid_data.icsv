@@ -1,0 +1,17 @@
+# iCSV 1.0 UTF-8
+# [METADATA]
+# field_delimiter = |
+# rows = 3
+# columns = 2
+# creation_date = 2026-01-21T00:00:00Z
+# generator = DEVO
+
+# [FIELDS]
+# fields = id|temp
+# types = integer|number
+
+# [DATA]
+id|temp
+1|12.5
+2|99.9
+3|-10.0

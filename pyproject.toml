@@ -4,16 +4,21 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "devo"
-version = "0.1.0"
-description = "DEVO — CSV -> iCSV enrichment + Frictionless validation tooling"
+version = "0.2.0"
+description = "DEVO — CSV to iCSV enrichment and Frictionless validation"
 readme = "README.md"
 license = {text = "MIT"}
 requires-python = ">=3.9"
 
-dependencies = [
-  "frictionless>=4.0.0",
-  "flask>=2.0.0"
-]
+# frictionless v5 is supported (code uses basepath + Schema.from_descriptor for v5 compatibility).
+dependencies = ["frictionless>=4.0.0"]
+
+[project.optional-dependencies]
+# Flask is a demo dependency only; the core pipeline does not need it.
+webui = ["flask>=2.0.0"]
+
+[project.scripts]
+devo = "devo.cli:main"
 
 [project.urls]
-"Source" = "https://example.org/devo"
+Source = "https://github.com/envidat/devo"
