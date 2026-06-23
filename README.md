@@ -19,6 +19,57 @@ pip install -e ".[webui]"
 
 Requires Python 3.9+ and `frictionless` (v4 or v5).
 
+## Try it out
+
+A small sample dataset lives at `examples/sample.csv` — three columns (`timestamp`, `PSUM`, `TA`) representing hourly weather observations. Use it to take DEVO for a spin without needing your own data.
+
+### CLI
+
+```bash
+# Enrich, build schema, and validate in one command
+devo run examples/sample.csv
+
+# Results land in DEVO_output/ by default:
+#   sample.icsv               — annotated iCSV
+#   sample_schema.json        — Frictionless Table Schema
+#   sample_DEVO_report.txt    — human-readable validation report
+```
+
+Run `devo run examples/sample.csv --out my_output` to write to a different directory.
+
+### Python
+
+```python
+from devo.enrich import ICSVEnricher
+from devo.validate import validate_icsv
+
+icsv, schema = ICSVEnricher().make_icsv("examples/sample.csv", "DEVO_output")
+report_path, valid = validate_icsv(icsv, schema_path=schema)
+
+print(f"Valid: {valid}")
+print(f"Report written to: {report_path}")
+```
+
+### Web demo
+
+Install the optional Flask dependency first (if you haven't already):
+
+```bash
+pip install -e ".[webui]"
+```
+
+Start the local server:
+
+```bash
+flask --app devo.webui run
+```
+
+Then open `http://127.0.0.1:5000` in your browser. Click **Choose File**, select `examples/sample.csv`, and click **Upload**. The page will display the paths to the generated iCSV, schema, and report, along with the overall `Valid` result.
+
+> The web UI is a local demo only — do not expose it to a network.
+
+---
+
 ## CLI
 
 ```bash
