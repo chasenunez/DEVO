@@ -1,0 +1,22 @@
+# iCSV 1.0 UTF-8
+# [METADATA]
+# iCSV_version = 1.0
+# field_delimiter = |
+# rows = 3
+# columns = 3
+# creation_date = 2026-06-23T11:20:13.593416Z
+# generator = DEVO
+
+# [FIELDS]
+# fields = timestamp|PSUM|TA
+# types = datetime|integer|number
+# min = 2005-08-23T15:30:00|0|12.5
+# max = 2005-08-23T17:30:00|1|13.0
+# missing_count = 0|0|0
+# description = ||
+
+# [DATA]
+timestamp|PSUM|TA
+2005-08-23T15:30:00|0|12.5
+2005-08-23T16:30:00|1|13.0
+2005-08-23T17:30:00|0|12.8

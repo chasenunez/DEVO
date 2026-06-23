@@ -1,0 +1,19 @@
+DEVO Validation Report
+======================
+File:  sample.icsv
+Date:  2026-06-23T11:20:14Z
+Valid: YES
+
+METADATA
+----------------------------------------
+[OK] All required metadata present.
+
+TYPE CONSISTENCY
+----------------------------------------
+[OK]   timestamp: declared=datetime, inferred=datetime
+[OK]   PSUM: declared=integer, inferred=integer
+[OK]   TA: declared=number, inferred=number
+
+DATA VALIDATION
+----------------------------------------
+[PASS] No data errors found.

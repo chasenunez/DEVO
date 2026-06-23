@@ -1,0 +1,46 @@
+{
+  "fields": [
+    {
+      "name": "timestamp",
+      "type": "datetime",
+      "format": "any",
+      "constraints": {
+        "minimum": "2005-08-23T15:30:00",
+        "maximum": "2005-08-23T17:30:00",
+        "required": true
+      }
+    },
+    {
+      "name": "PSUM",
+      "type": "integer",
+      "constraints": {
+        "minimum": 0,
+        "maximum": 1,
+        "required": true
+      }
+    },
+    {
+      "name": "TA",
+      "type": "number",
+      "constraints": {
+        "minimum": 12.5,
+        "maximum": 13.0,
+        "required": true
+      }
+    }
+  ],
+  "missingValues": [
+    "",
+    "-999",
+    "-999.0",
+    "-999.000000",
+    "N/A",
+    "NA",
+    "NULL",
+    "NaN",
+    "n/a",
+    "na",
+    "nan",
+    "null"
+  ]
+}
