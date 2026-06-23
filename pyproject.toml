@@ -7,7 +7,7 @@ name = "devo"
 version = "0.2.0"
 description = "DEVO — CSV to iCSV enrichment and Frictionless validation"
 readme = "README.md"
-license = {text = "MIT"}
+license = "MIT"
 requires-python = ">=3.9"
 
 # frictionless v5 is supported (code uses basepath + Schema.from_descriptor for v5 compatibility).
@@ -22,3 +22,6 @@ devo = "devo.cli:main"
 
 [project.urls]
 Source = "https://github.com/envidat/devo"
+
+[tool.setuptools.packages.find]
+include = ["devo*"]
