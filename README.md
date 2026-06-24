@@ -55,7 +55,7 @@ devo --help
 
 ---
 
-## II. The Three Commands
+## II. Basic Commands
 
 ```
 devo run      data.csv     # enrich → validate → report (most common)
@@ -69,9 +69,9 @@ All three write their outputs to `DEVO_output/` by default. Use `--out MY_DIR` t
 
 ---
 
-## III. Tutorial: From Messy CSV to Upload-Ready iCSV
+## III. Tutorial
 
-This tutorial walks through a realistic scenario: environmental sensor data with two common problems. You will enrich the file, read the output to spot the problems, fix the source CSV, and confirm the corrected file is ready for upload.
+This tutorial walks through a scenario where you have a comma separated (.csv) dataset of environmental sensor data that you want to enrich and validate to make a submission-ready iCSV. 
 
 ### Step 1: The raw data (with errors)
 
@@ -91,7 +91,7 @@ Two problems are hidden in this file:
 - **Row 2, `temperature_c`**: the value `MISSING` is a custom nodata sentinel that DEVO does not recognise by default. DEVO will treat it as a real string value, which forces the entire column's inferred type to `string` instead of `number`.
 - **Row 3, `humidity_pct`**: the value `168` is a data-entry error; relative humidity cannot exceed 100%. DEVO will not catch impossible domain values on its own, but the iCSV will expose the inflated maximum so you can spot it.
 
-(Note: `N/A` in `wind_speed_ms` is fine; it is a recognised nodata sentinel and is handled correctly.)
+(Notice that the `N/A` in `wind_speed_ms` is fine since `N/A` it is a recognised nodata sentinel)
 
 ---
 
@@ -178,7 +178,7 @@ Two red flags:
 
 ### Step 5: Fix the errors
 
-#### Fix A: The unrecognised nodata sentinel
+#### Fix A: The unrecognized nodata sentinel
 
 The cleanest fix is to replace `MISSING` in the source CSV with a sentinel DEVO already recognises: `N/A`, `NA`, `null`, or an empty cell are all understood automatically.
 
