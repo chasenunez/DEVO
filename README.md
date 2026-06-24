@@ -33,7 +33,7 @@ Before uploading, confirm:
 
 ---
 
-## 1. Installation
+## I. Installation
 
 ```bash
 pip install py-devo
@@ -55,7 +55,7 @@ devo --help
 
 ---
 
-## 2. The Three Commands
+## II. The Three Commands
 
 ```
 devo run      data.csv     # enrich → validate → report (most common)
@@ -69,7 +69,7 @@ All three write their outputs to `DEVO_output/` by default. Use `--out MY_DIR` t
 
 ---
 
-## 3. Tutorial: From Messy CSV to Upload-Ready iCSV
+## III. Tutorial: From Messy CSV to Upload-Ready iCSV
 
 This tutorial walks through a realistic scenario: environmental sensor data with two common problems. You will enrich the file, read the output to spot the problems, fix the source CSV, and confirm the corrected file is ready for upload.
 
@@ -178,7 +178,7 @@ Two red flags:
 
 ### Step 5: Fix the errors
 
-#### Fix 1: The unrecognised nodata sentinel
+#### Fix A: The unrecognised nodata sentinel
 
 The cleanest fix is to replace `MISSING` in the source CSV with a sentinel DEVO already recognises: `N/A`, `NA`, `null`, or an empty cell are all understood automatically.
 
@@ -190,7 +190,7 @@ If you cannot change the source data and `MISSING` will always appear in your fi
 devo run sensor_data.csv --nodata MISSING
 ```
 
-#### Fix 2: The impossible humidity value
+#### Fix B: The impossible humidity value
 
 Row 3 has `humidity_pct = 168`. Investigate the source; it is likely a typo for `68`. Correct it in the CSV.
 
@@ -276,7 +276,7 @@ Once all boxes are checked, submit the `.icsv` file and its accompanying `_schem
 
 ---
 
-## 4. Understanding the Validation Report
+## IV. Understanding the Validation Report
 
 The report has three sections:
 
@@ -385,7 +385,7 @@ If there are more than 50 errors, the report shows only the first 50 and notes t
 
 ---
 
-## 5. Understanding the iCSV Format
+## V. Understanding the iCSV Format
 
 An iCSV file is a plain-text CSV with a structured comment header. Comments begin with `#`. There are three named sections.
 
@@ -454,7 +454,7 @@ You can edit values in `# [DATA]` directly, but if you do, re-run `devo validate
 
 ---
 
-## 6. Common Errors and How to Fix Them
+## VI. Common Errors and How to Fix Them
 
 ### A numeric column is typed as `string`
 
@@ -620,7 +620,7 @@ Any other sentinel, such as `MISSING`, `ND`, `NM`, `none`, `-`, or `9999`, must 
 
 ---
 
-## 7. CLI Reference
+## VII. CLI Reference
 
 ### `devo run`: enrich then validate (most common)
 
@@ -672,7 +672,7 @@ devo validate INPUT.icsv [--out DIR] [--schema PATH]
 
 ---
 
-## 8. Python API
+## VIII. Python API
 
 For scripted or batch use cases:
 
