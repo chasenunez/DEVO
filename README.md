@@ -1,4 +1,4 @@
-# DEVO
+# Data Enrichment and Validation Orchestrator (DEVO)
 
 DEVO takes a plain CSV, infers column types and statistics, and produces three output files:
 
